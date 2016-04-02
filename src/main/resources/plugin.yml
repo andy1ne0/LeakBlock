@@ -1,0 +1,5 @@
+name: LeakBlock
+version: 1.0
+author: TheYellowCreepz
+main: me.andy1ne0.leakblock.bukkit.LeakBlock
+desctiption: Block the usage of the MCLeaks Proxy.

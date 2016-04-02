@@ -1,0 +1,17 @@
+# LeakBlock, by Yellow.
+# This plugin's purpose is to block the use of the MCLeaks proxies to evade bans on compromised accounts.
+# The asyncEnabled field must be either true or false, this will determine if the processing of account data is handled on or off the main thread.
+# The kick message is simply a way for you to configure the kick message. Use "@@" (without quotation marks) to signify a new line.
+# Use "&" color codes.
+# If the kick message is equal to "default", the kick message will be set to the default value.
+# The kickDelayTime field is ONLY USED IF processing is handled asynchronously.
+# This will allow you to finetune the delay on kicks, as sometimes the kick reason will not appear if the player has not yet loaded a world.
+# The delay time is measured in ticks. 20 ticks is equal to 1 second.
+# If there are 5 failed connections within a minute, the plugin will terminate.
+# Please keep in mind that the ip-api.com API has a limit of 150 connections per minute. If your server is exceeding that, you need to contact them.
+# This plugin has an event API for developers to use, if you wish to cache results to reduce your usage of the ip-api service.
+# More info about that on the Spigot resource page.
+
+asyncEnabled: false
+kickMessage: default
+kickDelayTime: 0
