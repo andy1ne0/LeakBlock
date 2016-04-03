@@ -104,6 +104,13 @@ public class LeakBlock extends JavaPlugin implements Listener {
             Bukkit.getPluginManager().disablePlugin(this);
         }
 
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                // HttpPost post = new HttpPost()
+            }
+        }.runTaskAsynchronously(this);
+
         Bukkit.getPluginManager().registerEvents(this, this);
 
         new BukkitRunnable() {
