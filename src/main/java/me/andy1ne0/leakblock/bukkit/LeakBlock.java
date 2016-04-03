@@ -48,6 +48,7 @@ public class LeakBlock extends JavaPlugin implements Listener {
     private int failedAttempts = 0;
     private int maxFailedAttempts = 5;
     private boolean debugEnabled = false;
+    private boolean updateCheck = true;
 
     public LeakBlock getInstance(){
         return instance;
@@ -73,6 +74,8 @@ public class LeakBlock extends JavaPlugin implements Listener {
         maxFailedAttempts = getConfig().getInt("maximumFailedPings");
 
         debugEnabled = getConfig().getBoolean("debug");
+
+        updateCheck = getConfig().getBoolean("updatecheck");
 
         if(asyncProcess){
             kickDelayTime = getConfig().getInt("kickDelayTime");
@@ -104,12 +107,35 @@ public class LeakBlock extends JavaPlugin implements Listener {
             Bukkit.getPluginManager().disablePlugin(this);
         }
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                // HttpPost post = new HttpPost()
-            }
-        }.runTaskAsynchronously(this);
+        if(updateCheck) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    try {
+                        Bukkit.getServer().getLogger().info("[LeakBlock] Checking for updates... ");
+                        HttpPost post = new HttpPost("https://raw.githubusercontent.com/andy1ne0/LeakBlock/master/src/main/resources/latestversion.txt");
+                        HttpClient client = HttpClientBuilder.create().build();
+                        HttpResponse getFromPost = client.execute(post);
+                        InputStream in = getFromPost.getEntity().getContent();
+                        BufferedReader read = new BufferedReader(new InputStreamReader(in));
+                        StringBuilder conv = new StringBuilder();
+                        String s;
+                        while((s = read.readLine()) != null){
+                            conv.append(s);
+                        }
+                        if(conv.toString().equalsIgnoreCase(getInstance().getDescription().getVersion())){
+                            Bukkit.getServer().getLogger().info("[LeakBlock] Your version is up to date. ");
+                        } else {
+                            Bukkit.getServer().getLogger().info("[LeakBlock] An update is available, or will be soon. Check the Spigot forums for more information. ");
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }.runTaskAsynchronously(this);
+        } else {
+            Bukkit.getServer().getLogger().info("[LeakBlock] Update checking is disabled. ");
+        }
 
         Bukkit.getPluginManager().registerEvents(this, this);
 

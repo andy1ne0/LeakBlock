@@ -48,6 +48,7 @@ public class LeakBlock extends Plugin implements Listener {
     private File file = null;
     private int maxFailedAttempts = 5;
     private boolean debugEnabled = false;
+    private boolean updateCheck = true;
 
     public LeakBlock getInstance(){
         return instance;
@@ -96,6 +97,8 @@ public class LeakBlock extends Plugin implements Listener {
 
         debugEnabled = getConfig().getBoolean("debug");
 
+        updateCheck = getConfig().getBoolean("updatecheck");
+
         if(asyncProcess){
             kickDelayTime = getConfig().getInt("kickDelayTime");
             getProxy().getLogger().info("[LeakBlock] Player processing is being handled asynchronously, the configured kick delay is: "+kickDelayTime+". ");
@@ -125,6 +128,36 @@ public class LeakBlock extends Plugin implements Listener {
             e.printStackTrace();
             getProxy().getPluginManager().unregisterListeners(this);
             getProxy().getPluginManager().unregisterCommands(this);
+        }
+
+        if(updateCheck) {
+            getProxy().getScheduler().runAsync(this, new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        getInstance().getLogger().info("[LeakBlock] Checking for updates... ");
+                        HttpPost post = new HttpPost("https://raw.githubusercontent.com/andy1ne0/LeakBlock/master/src/main/resources/latestversion.txt");
+                        HttpClient client = HttpClientBuilder.create().build();
+                        HttpResponse getFromPost = client.execute(post);
+                        InputStream in = getFromPost.getEntity().getContent();
+                        BufferedReader read = new BufferedReader(new InputStreamReader(in));
+                        StringBuilder conv = new StringBuilder();
+                        String s;
+                        while((s = read.readLine()) != null){
+                            conv.append(s);
+                        }
+                        if(conv.toString().equalsIgnoreCase(getInstance().getDescription().getVersion())){
+                            getInstance().getLogger().info("[LeakBlock] Your version is up to date. ");
+                        } else {
+                            getInstance().getLogger().info("[LeakBlock] An update is available, or will be soon. Check the Spigot forums for more information. ");
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        } else {
+            getInstance().getLogger().info("[LeakBlock] Update checking is disabled. ");
         }
 
         getProxy().getPluginManager().registerListener(this, this);
