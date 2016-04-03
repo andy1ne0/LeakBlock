@@ -46,6 +46,8 @@ public class LeakBlock extends JavaPlugin implements Listener {
     // private int timeout = 2000;
     private LeakBlock instance = null;
     private int failedAttempts = 0;
+    private int maxFailedAttempts = 5;
+    private boolean debugEnabled = false;
 
     public LeakBlock getInstance(){
         return instance;
@@ -67,6 +69,10 @@ public class LeakBlock extends JavaPlugin implements Listener {
                 : getConfig().getString("kickMessage").replace("@@", "\n");
 
         asyncProcess = getConfig().getBoolean("asyncEnabled");
+
+        maxFailedAttempts = getConfig().getInt("maximumFailedPings");
+
+        debugEnabled = getConfig().getBoolean("debug");
 
         if(asyncProcess){
             kickDelayTime = getConfig().getInt("kickDelayTime");
@@ -144,7 +150,7 @@ public class LeakBlock extends JavaPlugin implements Listener {
                         }
 
                         JSONObject json = new JSONObject(conv.toString());
-                        if(json.getString("isp").equalsIgnoreCase("OVH SAS") && json.getString("country").equalsIgnoreCase("France")){
+                        if(json.getString("isp").equalsIgnoreCase("OVH SAS") && (json.getString("country").equalsIgnoreCase("France") || json.getString("country").equalsIgnoreCase("Italy"))){
 
                             new BukkitRunnable() {
                                 @Override
@@ -154,6 +160,11 @@ public class LeakBlock extends JavaPlugin implements Listener {
                                 }
                             }.runTaskLater(getInstance(), kickDelayTime);
 
+                        } else if(json.getString("status").equalsIgnoreCase("fail")){
+                            if(debugEnabled) {
+                                getServer().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
+                                getServer().getLogger().info("[LeakBlock] Dump: " + conv.toString());
+                            }
                         }
                     } catch (IOException e){
                         e.printStackTrace();
@@ -161,7 +172,7 @@ public class LeakBlock extends JavaPlugin implements Listener {
                             @Override
                             public void run() {
                                 failedAttempts++;
-                                if(failedAttempts >= 5){
+                                if(failedAttempts >= maxFailedAttempts){
                                     Bukkit.getServer().getLogger().info("[LeakBlock] Maximum failure limit reached. Plugin terminated. ");
                                     Bukkit.getPluginManager().disablePlugin(getInstance());
                                 }
@@ -184,16 +195,23 @@ public class LeakBlock extends JavaPlugin implements Listener {
                     conv.append(s);
                 }
 
+                Bukkit.getServer().getLogger().info("Dump: "+conv.toString());
+
                 JSONObject json = new JSONObject(conv.toString());
-                if(json.getString("isp").equalsIgnoreCase("OVH SAS") && json.getString("country").equalsIgnoreCase("France")){
+                if(json.getString("isp").equalsIgnoreCase("OVH SAS") && (json.getString("country").equalsIgnoreCase("France") || json.getString("country").equalsIgnoreCase("Italy"))){
                     Bukkit.getPluginManager().callEvent(new PlayerLeakProxyEvent(evt.getPlayer(), evt.getAddress()));
                     evt.setResult(PlayerLoginEvent.Result.KICK_OTHER);
                     evt.setKickMessage(kickReason);
+                } else if(json.getString("status").equalsIgnoreCase("fail")){
+                    if(debugEnabled) {
+                        getServer().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
+                        getServer().getLogger().info("[LeakBlock] Dump: " + conv.toString());
+                    }
                 }
             } catch (IOException e){
                 e.printStackTrace();
                 failedAttempts++;
-                if(failedAttempts >= 5){
+                if(failedAttempts >= maxFailedAttempts){
                     Bukkit.getServer().getLogger().info("[LeakBlock] Maximum failure limit reached. Plugin terminated. ");
                     Bukkit.getPluginManager().disablePlugin(this);
                 }

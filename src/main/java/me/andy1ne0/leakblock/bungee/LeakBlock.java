@@ -46,6 +46,8 @@ public class LeakBlock extends Plugin implements Listener {
     private int failedAttempts = 0;
     private static Configuration config = null;
     private File file = null;
+    private int maxFailedAttempts = 5;
+    private boolean debugEnabled = false;
 
     public LeakBlock getInstance(){
         return instance;
@@ -89,6 +91,10 @@ public class LeakBlock extends Plugin implements Listener {
                 : getConfig().getString("kickMessage").replace("@@", "\n");
 
         asyncProcess = getConfig().getBoolean("asyncEnabled");
+
+        maxFailedAttempts = getConfig().getInt("maximumFailedPings");
+
+        debugEnabled = getConfig().getBoolean("debug");
 
         if(asyncProcess){
             kickDelayTime = getConfig().getInt("kickDelayTime");
@@ -166,7 +172,12 @@ public class LeakBlock extends Plugin implements Listener {
                         }
 
                         JSONObject json = new JSONObject(conv.toString());
-                        if(json.getString("isp").equalsIgnoreCase("OVH SAS") && json.getString("country").equalsIgnoreCase("France")){
+                        if(json.getString("isp").equalsIgnoreCase("OVH SAS") && (json.getString("country").equalsIgnoreCase("France") || json.getString("country").equalsIgnoreCase("Italy"))){
+
+                            getProxy().getPluginManager().callEvent(
+                                    new PlayerLeakBungeeProxyEvent(evt.getConnection().getName(),
+                                            evt.getConnection().getUniqueId(),
+                                            evt.getConnection().getAddress().getAddress()));
 
                             getProxy().getScheduler().runAsync(getInstance(), new Runnable() {
                                 @Override
@@ -176,19 +187,20 @@ public class LeakBlock extends Plugin implements Listener {
                                     } catch (InterruptedException e) {
                                         e.printStackTrace();
                                     }
-                                    getProxy().getPluginManager().callEvent(
-                                            new PlayerLeakBungeeProxyEvent(evt.getConnection().getName(),
-                                                    evt.getConnection().getUniqueId(),
-                                                    evt.getConnection().getAddress().getAddress()));
                                     evt.getConnection().disconnect(kickReason);
                                 }
                             });
 
+                        } else if(json.getString("status").equalsIgnoreCase("fail")){
+                            if(debugEnabled) {
+                                getInstance().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
+                                getInstance().getLogger().info("[LeakBlock] Dump: " + conv.toString());
+                            }
                         }
                     } catch (IOException e){
                         e.printStackTrace();
                         failedAttempts++;
-                        if(failedAttempts >= 5){
+                        if(failedAttempts >= maxFailedAttempts){
                             getProxy().getLogger().info("[LeakBlock] Maximum failure limit reached. Plugin terminated. ");
                             getProxy().getPluginManager().unregisterCommands(getInstance());
                             getProxy().getPluginManager().unregisterListeners(getInstance());
@@ -211,15 +223,20 @@ public class LeakBlock extends Plugin implements Listener {
                 }
 
                 JSONObject json = new JSONObject(conv.toString());
-                if(json.getString("isp").equalsIgnoreCase("OVH SAS") && json.getString("country").equalsIgnoreCase("France")){
+                if(json.getString("isp").equalsIgnoreCase("OVH SAS") && (json.getString("country").equalsIgnoreCase("France") || json.getString("country").equalsIgnoreCase("Italy"))){
                     getProxy().getPluginManager().callEvent(new PlayerLeakBungeeProxyEvent(evt.getConnection().getName(), evt.getConnection().getUniqueId(), evt.getConnection().getAddress().getAddress()));
                     evt.setCancelled(true);
                     evt.setCancelReason(kickReason);
+                } else if(json.getString("status").equalsIgnoreCase("fail")){
+                    if(debugEnabled) {
+                        getInstance().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
+                        getInstance().getLogger().info("[LeakBlock] Dump: " + conv.toString());
+                    }
                 }
             } catch (IOException e){
                 e.printStackTrace();
                 failedAttempts++;
-                if(failedAttempts >= 5){
+                if(failedAttempts >= maxFailedAttempts){
                     getProxy().getLogger().info("[LeakBlock] Maximum failure limit reached. Plugin terminated. ");
                     getProxy().getPluginManager().unregisterListeners(this);
                     getProxy().getPluginManager().unregisterCommands(this);
