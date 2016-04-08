@@ -26,21 +26,18 @@ import java.net.InetAddress;
  */
 public class PlayerLeakProxyEvent extends Event {
 
-    private Player pl = null;
-    private InetAddress address = null;
-
     private static final HandlerList handlers = new HandlerList();
+    private final InetAddress address;
+    private final Player pl;
+
+    public PlayerLeakProxyEvent(Player pl, InetAddress ip) {
+        this.pl = pl;
+        this.address = ip;
+    }
 
     @Override
     public HandlerList getHandlers() {
         return handlers;
-    }
-
-    public PlayerLeakProxyEvent(Player pl, InetAddress ip){
-
-        this.pl = pl;
-        this.address = ip;
-
     }
 
     public InetAddress getAddress(){

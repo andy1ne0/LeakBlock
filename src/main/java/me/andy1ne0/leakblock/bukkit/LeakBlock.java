@@ -6,7 +6,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -38,6 +37,7 @@ import java.io.InputStreamReader;
  *
  * @author Andrew Petersen
  */
+
 public class LeakBlock extends JavaPlugin implements Listener {
 
     private boolean asyncProcess = false;
@@ -48,25 +48,22 @@ public class LeakBlock extends JavaPlugin implements Listener {
     private int failedAttempts = 0;
     private int maxFailedAttempts = 5;
     private boolean debugEnabled = false;
-    private boolean updateCheck = true;
 
-    public LeakBlock getInstance(){
+    public LeakBlock getInstance() {
         return instance;
     }
 
     @Override
-    public void onEnable(){
+    public void onEnable() {
 
         instance = this;
 
-        getConfig().options().copyDefaults(true);
         saveDefaultConfig();
-        reloadConfig();
 
-        Bukkit.getServer().getLogger().info("[LeakBlock] Initializing... ");
+        getServer().getLogger().info("[LeakBlock] Initializing... ");
 
         kickReason = getConfig().getString("kickMessage").equalsIgnoreCase("default")
-                ? (ChatColor.RED+"Prohibited proxy detected. \nPlease rejoin without using a proxy/VPN/Alt-generating server. ")
+                ? (ChatColor.RED + "Prohibited proxy detected. \nPlease rejoin without using a proxy/VPN/Alt-generating server. ")
                 : getConfig().getString("kickMessage").replace("@@", "\n");
 
         asyncProcess = getConfig().getBoolean("asyncEnabled");
@@ -75,18 +72,19 @@ public class LeakBlock extends JavaPlugin implements Listener {
 
         debugEnabled = getConfig().getBoolean("debug");
 
-        updateCheck = getConfig().getBoolean("updatecheck");
+        boolean updateCheck = getConfig().getBoolean("updatecheck");
 
-        if(asyncProcess){
+        if (asyncProcess) {
             kickDelayTime = getConfig().getInt("kickDelayTime");
-            Bukkit.getServer().getLogger().info("[LeakBlock] Player processing is being handled asynchronously, the configured kick delay is: "+kickDelayTime+". ");
+            getServer().getLogger().info("[LeakBlock] Player processing is being handled asynchronously, the configured kick delay is: " + kickDelayTime + ". ");
         } else {
-            Bukkit.getServer().getLogger().info("[LeakBlock] Player processing is being handled synchronously. This may result in some lag. ");
+            getServer().getLogger().info("[LeakBlock] Player processing is being handled synchronously. This may result in some lag. ");
         }
 
         // timeout = getConfig().getInt("timeout");
-        // Bukkit.getServer().getLogger().info("[LeakBlock] The configured timeout for connections is "+timeout+". ");
+        // getServer().getServer().getLogger().info("[LeakBlock] The configured timeout for connections is "+timeout+". ");
 
+        //Please do something about this, it is ugly. :3
         try {
             HttpPost post = new HttpPost("http://ip-api.com/json/8.8.8.8");
             HttpClient httpClient = HttpClientBuilder.create().build();
@@ -95,24 +93,24 @@ public class LeakBlock extends JavaPlugin implements Listener {
             BufferedReader inBuff = new BufferedReader(new InputStreamReader(in));
             StringBuilder conv = new StringBuilder();
             String s;
-            while((s = inBuff.readLine()) != null){
+            while ((s = inBuff.readLine()) != null) {
                 conv.append(s);
             }
 
-            Bukkit.getServer().getLogger().info("[LeakBlock] Successfully pinged ip-api.com. ");
+            getServer().getLogger().info("[LeakBlock] Successfully pinged ip-api.com. ");
 
-        } catch (IOException e){
-            Bukkit.getServer().getLogger().severe("[LeakBlock] Could not connect to ip-api.com. Plugin aborted. ");
+        } catch (IOException e) {
+            getServer().getLogger().severe("[LeakBlock] Could not connect to ip-api.com. Plugin aborted. ");
             e.printStackTrace();
-            Bukkit.getPluginManager().disablePlugin(this);
+            getServer().getPluginManager().disablePlugin(this);
         }
 
-        if(updateCheck) {
+        if (updateCheck) {
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     try {
-                        Bukkit.getServer().getLogger().info("[LeakBlock] Checking for updates... ");
+                        getServer().getLogger().info("[LeakBlock] Checking for updates... ");
                         HttpPost post = new HttpPost("https://raw.githubusercontent.com/andy1ne0/LeakBlock/master/src/main/resources/latestversion.txt");
                         HttpClient client = HttpClientBuilder.create().build();
                         HttpResponse getFromPost = client.execute(post);
@@ -120,13 +118,13 @@ public class LeakBlock extends JavaPlugin implements Listener {
                         BufferedReader read = new BufferedReader(new InputStreamReader(in));
                         StringBuilder conv = new StringBuilder();
                         String s;
-                        while((s = read.readLine()) != null){
+                        while ((s = read.readLine()) != null) {
                             conv.append(s);
                         }
-                        if(conv.toString().equalsIgnoreCase(getInstance().getDescription().getVersion())){
-                            Bukkit.getServer().getLogger().info("[LeakBlock] Your version is up to date. ");
+                        if (conv.toString().equalsIgnoreCase(getInstance().getDescription().getVersion())) {
+                            getServer().getLogger().info("[LeakBlock] Your version is up to date. ");
                         } else {
-                            Bukkit.getServer().getLogger().info("[LeakBlock] An update is available, or will be soon. Check the Spigot forums for more information. ");
+                            getServer().getLogger().info("[LeakBlock] An update is available, or will be soon. Check the Spigot forums for more information. ");
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -134,10 +132,10 @@ public class LeakBlock extends JavaPlugin implements Listener {
                 }
             }.runTaskAsynchronously(this);
         } else {
-            Bukkit.getServer().getLogger().info("[LeakBlock] Update checking is disabled. ");
+            getServer().getLogger().info("[LeakBlock] Update checking is disabled. ");
         }
 
-        Bukkit.getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(this, this);
 
         new BukkitRunnable() {
             @Override
@@ -150,64 +148,64 @@ public class LeakBlock extends JavaPlugin implements Listener {
 
     @EventHandler
     @SuppressWarnings("all")
-    public void onPlayerLogin(final PlayerLoginEvent evt){
+    public void onPlayerLogin(final PlayerLoginEvent evt) {
 
         PlayerLeakProxyPreProcessEvent event = new PlayerLeakProxyPreProcessEvent(evt.getPlayer(), evt.getAddress());
 
-        Bukkit.getPluginManager().callEvent(event);
+        getServer().getPluginManager().callEvent(event);
 
-        if(event.isCancelled()){
+        if (event.isCancelled()) {
             evt.setResult(PlayerLoginEvent.Result.KICK_OTHER);
             String kickReasonToSend = kickReason;
-            if(event.isUsingCustomKickReason()) kickReasonToSend = event.getKickReason();
+            if (event.isUsingCustomKickReason()) kickReasonToSend = event.getKickReason();
             evt.setKickMessage(kickReasonToSend);
             return;
         }
 
-        if(asyncProcess){
+        if (asyncProcess) {
 
             new BukkitRunnable() {
                 @Override
                 @SuppressWarnings("all")
                 public void run() {
                     try {
-                        HttpPost post = new HttpPost("http://ip-api.com/json/"+evt.getAddress().getHostAddress());
+                        HttpPost post = new HttpPost("http://ip-api.com/json/" + evt.getAddress().getHostAddress());
                         HttpClient httpClient = HttpClientBuilder.create().build();
                         HttpResponse getData = httpClient.execute(post);
                         InputStream in = getData.getEntity().getContent();
                         BufferedReader inBuff = new BufferedReader(new InputStreamReader(in));
                         StringBuilder conv = new StringBuilder();
                         String s = null;
-                        while((s = inBuff.readLine()) != null){
+                        while ((s = inBuff.readLine()) != null) {
                             conv.append(s);
                         }
 
                         JSONObject json = new JSONObject(conv.toString());
-                        if(json.getString("isp").equalsIgnoreCase("OVH SAS") && (json.getString("country").equalsIgnoreCase("France") || json.getString("country").equalsIgnoreCase("Italy"))){
+                        if (json.getString("isp").equalsIgnoreCase("OVH SAS") && (json.getString("country").equalsIgnoreCase("France") || json.getString("country").equalsIgnoreCase("Italy"))) {
 
                             new BukkitRunnable() {
                                 @Override
                                 public void run() {
-                                    Bukkit.getPluginManager().callEvent(new PlayerLeakProxyEvent(evt.getPlayer(), evt.getAddress()));
+                                    getServer().getPluginManager().callEvent(new PlayerLeakProxyEvent(evt.getPlayer(), evt.getAddress()));
                                     evt.getPlayer().kickPlayer(kickReason);
                                 }
                             }.runTaskLater(getInstance(), kickDelayTime);
 
-                        } else if(json.getString("status").equalsIgnoreCase("fail")){
-                            if(debugEnabled) {
+                        } else if (json.getString("status").equalsIgnoreCase("fail")) {
+                            if (debugEnabled) {
                                 getServer().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
                                 getServer().getLogger().info("[LeakBlock] Dump: " + conv.toString());
                             }
                         }
-                    } catch (IOException e){
+                    } catch (IOException e) {
                         e.printStackTrace();
                         new BukkitRunnable() {
                             @Override
                             public void run() {
                                 failedAttempts++;
-                                if(failedAttempts >= maxFailedAttempts){
-                                    Bukkit.getServer().getLogger().info("[LeakBlock] Maximum failure limit reached. Plugin terminated. ");
-                                    Bukkit.getPluginManager().disablePlugin(getInstance());
+                                if (failedAttempts >= maxFailedAttempts) {
+                                    getServer().getLogger().info("[LeakBlock] Maximum failure limit reached. Plugin terminated. ");
+                                    getServer().getPluginManager().disablePlugin(getInstance());
                                 }
                             }
                         }.runTask(getInstance());
@@ -217,34 +215,34 @@ public class LeakBlock extends JavaPlugin implements Listener {
 
         } else {
             try {
-                HttpPost post = new HttpPost("http://ip-api.com/json/"+evt.getAddress().getHostAddress());
+                HttpPost post = new HttpPost("http://ip-api.com/json/" + evt.getAddress().getHostAddress());
                 HttpClient httpClient = HttpClientBuilder.create().build();
                 HttpResponse getData = httpClient.execute(post);
                 InputStream in = getData.getEntity().getContent();
                 BufferedReader inBuff = new BufferedReader(new InputStreamReader(in));
                 StringBuilder conv = new StringBuilder();
                 String s = null;
-                while((s = inBuff.readLine()) != null){
+                while ((s = inBuff.readLine()) != null) {
                     conv.append(s);
                 }
 
                 JSONObject json = new JSONObject(conv.toString());
-                if(json.getString("isp").equalsIgnoreCase("OVH SAS") && (json.getString("country").equalsIgnoreCase("France") || json.getString("country").equalsIgnoreCase("Italy"))){
-                    Bukkit.getPluginManager().callEvent(new PlayerLeakProxyEvent(evt.getPlayer(), evt.getAddress()));
+                if (json.getString("isp").equalsIgnoreCase("OVH SAS") && (json.getString("country").equalsIgnoreCase("France") || json.getString("country").equalsIgnoreCase("Italy"))) {
+                    getServer().getPluginManager().callEvent(new PlayerLeakProxyEvent(evt.getPlayer(), evt.getAddress()));
                     evt.setResult(PlayerLoginEvent.Result.KICK_OTHER);
                     evt.setKickMessage(kickReason);
-                } else if(json.getString("status").equalsIgnoreCase("fail")){
-                    if(debugEnabled) {
+                } else if (json.getString("status").equalsIgnoreCase("fail")) {
+                    if (debugEnabled) {
                         getServer().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
                         getServer().getLogger().info("[LeakBlock] Dump: " + conv.toString());
                     }
                 }
-            } catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
                 failedAttempts++;
-                if(failedAttempts >= maxFailedAttempts){
-                    Bukkit.getServer().getLogger().info("[LeakBlock] Maximum failure limit reached. Plugin terminated. ");
-                    Bukkit.getPluginManager().disablePlugin(this);
+                if (failedAttempts >= maxFailedAttempts) {
+                    getServer().getLogger().info("[LeakBlock] Maximum failure limit reached. Plugin terminated. ");
+                    getServer().getPluginManager().disablePlugin(this);
                 }
             }
         }
