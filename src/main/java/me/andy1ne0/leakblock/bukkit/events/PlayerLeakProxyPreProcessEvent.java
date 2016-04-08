@@ -27,22 +27,21 @@ import java.net.InetAddress;
  */
 public class PlayerLeakProxyPreProcessEvent extends Event implements Cancellable {
 
-    private Player pl = null;
-    private InetAddress address = null;
-    private boolean isCancelled = false;
-    private String kickReason = null;
-    boolean usingCustomKickReason = false;
-
     private static final HandlerList handlers = new HandlerList();
+    private final InetAddress address;
+    private final Player pl;
+    boolean usingCustomKickReason = false;
+    private String kickReason = "";
+    private boolean isCancelled = false;
+
+    public PlayerLeakProxyPreProcessEvent(Player pl, InetAddress ip) {
+        this.pl = pl;
+        this.address = ip;
+    }
 
     @Override
     public HandlerList getHandlers() {
         return handlers;
-    }
-
-    public PlayerLeakProxyPreProcessEvent(Player pl, InetAddress ip){
-        this.pl = pl;
-        this.address = ip;
     }
 
     public Player getPlayer(){
@@ -58,6 +57,11 @@ public class PlayerLeakProxyPreProcessEvent extends Event implements Cancellable
         return isCancelled;
     }
 
+    @Override
+    public void setCancelled(boolean b) {
+        isCancelled = b;
+    }
+
     public void setCustomKickMessage(String s){
         kickReason = s;
         usingCustomKickReason = true;
@@ -69,10 +73,5 @@ public class PlayerLeakProxyPreProcessEvent extends Event implements Cancellable
 
     public String getKickReason(){
         return kickReason;
-    }
-
-    @Override
-    public void setCancelled(boolean b) {
-        isCancelled = b;
     }
 }

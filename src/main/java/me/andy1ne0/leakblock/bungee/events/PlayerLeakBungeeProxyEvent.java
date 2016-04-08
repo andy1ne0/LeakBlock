@@ -25,16 +25,14 @@ import java.util.UUID;
  */
 public class PlayerLeakBungeeProxyEvent extends Event {
 
-    private String name = null;
-    private UUID uuid = null;
-    private InetAddress address = null;
+    private final String name;
+    private final UUID uuid;
+    private final InetAddress address;
 
     public PlayerLeakBungeeProxyEvent(String name, UUID uuid, InetAddress ip){
-
         this.name = name;
         this.address = ip;
         this.uuid = uuid;
-
     }
 
     public UUID getUuid(){

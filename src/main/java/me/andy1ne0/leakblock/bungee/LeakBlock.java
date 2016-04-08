@@ -39,19 +39,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class LeakBlock extends Plugin implements Listener {
 
-    private boolean asyncProcess = false;
-    private String kickReason = null;
-    private int kickDelayTime = 0;
-    private LeakBlock instance = null;
-    private int failedAttempts = 0;
     private static Configuration config = null;
-    private File file = null;
-    private int maxFailedAttempts = 5;
-    private boolean debugEnabled = false;
-    private boolean updateCheck = true;
+    private int kickDelayTime = 0, failedAttempts = 0, maxFailedAttempts = 5;
+    private boolean asyncProcess = false, debugEnabled = false;
+    private LeakBlock instance;
+    private String kickReason;
+    private File file;
 
-    public LeakBlock getInstance(){
-        return instance;
+    public static Configuration getConfig() {
+        return config;
     }
 
     @Override
@@ -97,7 +93,7 @@ public class LeakBlock extends Plugin implements Listener {
 
         debugEnabled = getConfig().getBoolean("debug");
 
-        updateCheck = getConfig().getBoolean("updatecheck");
+        boolean updateCheck = getConfig().getBoolean("updatecheck");
 
         if(asyncProcess){
             kickDelayTime = getConfig().getInt("kickDelayTime");
@@ -146,19 +142,16 @@ public class LeakBlock extends Plugin implements Listener {
                         while((s = read.readLine()) != null){
                             conv.append(s);
                         }
-                        if(conv.toString().equalsIgnoreCase(getInstance().getDescription().getVersion())){
+                        if (conv.toString().equalsIgnoreCase(getInstance().getDescription().getVersion()))
                             getInstance().getLogger().info("[LeakBlock] Your version is up to date. ");
-                        } else {
+                        else
                             getInstance().getLogger().info("[LeakBlock] An update is available, or will be soon. Check the Spigot forums for more information. ");
-                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
             });
-        } else {
-            getInstance().getLogger().info("[LeakBlock] Update checking is disabled. ");
-        }
+        } else getInstance().getLogger().info("[LeakBlock] Update checking is disabled. ");
 
         getProxy().getPluginManager().registerListener(this, this);
 
@@ -279,14 +272,14 @@ public class LeakBlock extends Plugin implements Listener {
 
     }
 
-    public void saveConfig(){
+    public void saveConfig() {
         try {
             ConfigurationProvider.getProvider(YamlConfiguration.class).save(config, new File(getDataFolder(), "config.yml"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
+    
     public void initConfig(){
         try {
             file = new File(getDataFolder(), "config.yml");
@@ -296,8 +289,8 @@ public class LeakBlock extends Plugin implements Listener {
         }
     }
 
-    public static Configuration getConfig() {
-        return config;
+    public LeakBlock getInstance() {
+        return instance;
     }
 
 }
