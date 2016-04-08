@@ -42,9 +42,9 @@ public class LeakBlock extends Plugin implements Listener {
     private static Configuration config = null;
     private int kickDelayTime = 0, failedAttempts = 0, maxFailedAttempts = 5;
     private boolean asyncProcess = false, debugEnabled = false;
-    private LeakBlock instance = null;
-    private String kickReason = null;
-    private File file = null;
+    private LeakBlock instance;
+    private String kickReason;
+    private File file;
 
     public static Configuration getConfig() {
         return config;
@@ -279,7 +279,7 @@ public class LeakBlock extends Plugin implements Listener {
             e.printStackTrace();
         }
     }
-
+    
     public void initConfig(){
         try {
             file = new File(getDataFolder(), "config.yml");

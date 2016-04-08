@@ -42,13 +42,10 @@ public class LeakBlock extends JavaPlugin implements Listener {
 
     private int failedAttempts = 0, kickDelayTime = 0, maxFailedAttempts = 5;
     private boolean asyncProcess = false, debugEnabled = false;
-    private LeakBlock instance = null;
-    private String kickReason = null;
+    private LeakBlock instance;
+    private String kickReason;
     // private int timeout = 2000;
 
-    public LeakBlock getInstance() {
-        return instance;
-    }
 
     @Override
     public void onEnable() {
@@ -245,6 +242,10 @@ public class LeakBlock extends JavaPlugin implements Listener {
             }
         }
 
+    }
+
+    public LeakBlock getInstance() {
+        return instance;
     }
 
 }
