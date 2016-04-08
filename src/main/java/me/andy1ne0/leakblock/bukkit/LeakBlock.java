@@ -228,8 +228,6 @@ public class LeakBlock extends JavaPlugin implements Listener {
                     conv.append(s);
                 }
 
-                Bukkit.getServer().getLogger().info("Dump: "+conv.toString());
-
                 JSONObject json = new JSONObject(conv.toString());
                 if(json.getString("isp").equalsIgnoreCase("OVH SAS") && (json.getString("country").equalsIgnoreCase("France") || json.getString("country").equalsIgnoreCase("Italy"))){
                     Bukkit.getPluginManager().callEvent(new PlayerLeakProxyEvent(evt.getPlayer(), evt.getAddress()));
