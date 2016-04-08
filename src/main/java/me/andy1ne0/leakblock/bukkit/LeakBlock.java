@@ -40,14 +40,11 @@ import java.io.InputStreamReader;
 
 public class LeakBlock extends JavaPlugin implements Listener {
 
-    private boolean asyncProcess = false;
-    private String kickReason = null;
-    private int kickDelayTime = 0;
-    // private int timeout = 2000;
+    private int failedAttempts = 0, kickDelayTime = 0, maxFailedAttempts = 5;
+    private boolean asyncProcess = false, debugEnabled = false;
     private LeakBlock instance = null;
-    private int failedAttempts = 0;
-    private int maxFailedAttempts = 5;
-    private boolean debugEnabled = false;
+    private String kickReason = null;
+    // private int timeout = 2000;
 
     public LeakBlock getInstance() {
         return instance;
@@ -91,6 +88,7 @@ public class LeakBlock extends JavaPlugin implements Listener {
             HttpResponse getData = httpClient.execute(post);
             InputStream in = getData.getEntity().getContent();
             BufferedReader inBuff = new BufferedReader(new InputStreamReader(in));
+            //conv is never used, do a thing D:
             StringBuilder conv = new StringBuilder();
             String s;
             while ((s = inBuff.readLine()) != null) {
