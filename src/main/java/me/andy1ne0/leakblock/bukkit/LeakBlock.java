@@ -6,10 +6,6 @@ import com.jaunt.ResponseException;
 import com.jaunt.UserAgent;
 import me.andy1ne0.leakblock.bukkit.events.PlayerLeakProxyEvent;
 import me.andy1ne0.leakblock.bukkit.events.PlayerLeakProxyPreProcessEvent;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,11 +13,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 /**
  * All contents of this file, except where specified elsewhere, is the copyrighted property of Andrew Petersen.
@@ -79,27 +70,14 @@ public class LeakBlock extends JavaPlugin implements Listener {
             getServer().getLogger().info("[LeakBlock] Player processing is being handled synchronously. This may result in some lag. ");
         }
 
-        // timeout = getConfig().getInt("timeout");
-        // getServer().getServer().getLogger().info("[LeakBlock] The configured timeout for connections is "+timeout+". ");
-
-        //Please do something about this, it is ugly. :3
         try {
-            HttpPost post = new HttpPost("http://ip-api.com/json/8.8.8.8");
-            HttpClient httpClient = HttpClientBuilder.create().build();
-            HttpResponse getData = httpClient.execute(post);
-            InputStream in = getData.getEntity().getContent();
-            BufferedReader inBuff = new BufferedReader(new InputStreamReader(in));
-            //conv is never used, do a thing D:
-            StringBuilder conv = new StringBuilder();
-            String s;
-            while ((s = inBuff.readLine()) != null) {
-                conv.append(s);
-            }
+            UserAgent pingAgent = new UserAgent();
+            pingAgent.sendGET("http://ip-api.com/");
 
             getServer().getLogger().info("[LeakBlock] Successfully pinged ip-api.com. ");
 
-        } catch (IOException e) {
-            getServer().getLogger().severe("[LeakBlock] Could not connect to ip-api.com. Plugin aborted. ");
+        } catch (ResponseException e) {
+            getServer().getLogger().severe("[LeakBlock] Could not connect to ip-api.com, or an error was returned. Plugin aborted. ");
             e.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);
         }
@@ -240,10 +218,6 @@ public class LeakBlock extends JavaPlugin implements Listener {
                 e.printStackTrace();
             }
         }
-
-    }
-
-    public void testMethod(final PlayerLoginEvent evt){
 
     }
 
