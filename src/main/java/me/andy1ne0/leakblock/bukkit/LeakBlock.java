@@ -152,6 +152,13 @@ public class LeakBlock extends JavaPlugin implements Listener {
                         agent.sendGET("http://ip-api.com/json/" + evt.getAddress().getHostAddress());
 
                         JNode json = agent.json;
+                        if (json.get("status").toString().equalsIgnoreCase("fail")) {
+                            if (debugEnabled) {
+                                getServer().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
+                                getServer().getLogger().info("[LeakBlock] Dump: " + agent.json);
+                            }
+                            return;
+                        }
                         if (json.get("isp").toString().equalsIgnoreCase("OVH SAS")
                                 && (json.get("country").toString().equalsIgnoreCase("France")
                                 || json.get("country").toString().equalsIgnoreCase("Italy"))) {
@@ -164,11 +171,6 @@ public class LeakBlock extends JavaPlugin implements Listener {
                                 }
                             }.runTaskLater(getInstance(), kickDelayTime);
 
-                        } else if (json.get("status").toString().equalsIgnoreCase("fail")) {
-                            if (debugEnabled) {
-                                getServer().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
-                                getServer().getLogger().info("[LeakBlock] Dump: " + agent.json);
-                            }
                         }
                     } catch (ResponseException e) {
                         e.printStackTrace();
@@ -193,17 +195,19 @@ public class LeakBlock extends JavaPlugin implements Listener {
                 UserAgent agent = new UserAgent();
                 agent.sendGET("http://ip-api.com/json/" + evt.getAddress().getHostAddress());
                 JNode json = agent.json;
+                if (json.get("status").toString().equalsIgnoreCase("fail")) {
+                    if (debugEnabled) {
+                        getServer().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
+                        getServer().getLogger().info("[LeakBlock] Dump: " + agent.json);
+                    }
+                    return;
+                }
                 if (json.get("isp").toString().equalsIgnoreCase("OVH SAS")
                         && (json.get("country").toString().equalsIgnoreCase("France")
                         || json.get("country").toString().equalsIgnoreCase("Italy"))) {
                     getServer().getPluginManager().callEvent(new PlayerLeakProxyEvent(evt.getPlayer(), evt.getAddress()));
                     evt.setResult(PlayerLoginEvent.Result.KICK_OTHER);
                     evt.setKickMessage(kickReason);
-                } else if (json.get("status").toString().equalsIgnoreCase("fail")) {
-                    if (debugEnabled) {
-                        getServer().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
-                        getServer().getLogger().info("[LeakBlock] Dump: " + agent.json);
-                    }
                 }
             } catch (ResponseException e) {
                 e.printStackTrace();

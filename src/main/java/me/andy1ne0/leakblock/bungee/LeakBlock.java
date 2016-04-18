@@ -18,6 +18,8 @@ import net.md_5.bungee.event.EventHandler;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -121,31 +123,17 @@ public class LeakBlock extends Plugin implements Listener {
                 public void run() {
                     try {
                         getProxy().getLogger().info("[LeakBlock] Checking for updates... ");
-                        final UserAgent a = new UserAgent();
-                        a.sendGET("https://raw.githubusercontent.com/andy1ne0/LeakBlock/master/src/main/resources/latestversion.txt");
+                        URL url = new URL("https://raw.githubusercontent.com/andy1ne0/LeakBlock/master/src/main/resources/latestversion.txt");
+                        Scanner s = new Scanner(url.openStream());
+                        final String version = s.next();
 
-                        if (a.doc.innerHTML().equalsIgnoreCase(getInstance().getDescription().getVersion())) {
+                        if (version.equalsIgnoreCase(getInstance().getDescription().getVersion())) {
                             getProxy().getLogger().info("[LeakBlock] Your version is up to date. ");
                         } else {
                             getProxy().getLogger().info("[LeakBlock] An update is available, or will be soon. Check the Spigot forums for more information. ");
-                            getProxy().getPluginManager().registerListener(getInstance(), new Listener() {
-
-                                @EventHandler
-                                public void onPlayerJoin(PostLoginEvent evt){
-                                    boolean hasAdmin = false;
-                                    for(String s: evt.getPlayer().getGroups()){
-                                        if(s.toLowerCase().contains("admin"))
-                                            hasAdmin = true;
-                                    }
-                                    if(hasAdmin)
-                                        evt.getPlayer().sendMessage(ChatColor.DARK_GREEN+"["+ChatColor.GREEN+"LeakBlock"+ChatColor.DARK_GREEN+"] "
-                                                +ChatColor.GRAY+"An update is available. Current version: "+getInstance().getDescription().getVersion()
-                                                +", latest version: "+a.doc.innerHTML());
-                                }
-
-                            });
+                            getProxy().getPluginManager().registerListener(getInstance(), new UpdateListener(version));
                         }
-                    } catch (ResponseException e) {
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
@@ -189,6 +177,13 @@ public class LeakBlock extends Plugin implements Listener {
                         agent.sendGET("http://ip-api.com/json/" + evt.getConnection().getAddress().getAddress().getHostAddress());
 
                         JNode json = agent.json;
+                        if (json.get("status").toString().equalsIgnoreCase("fail")) {
+                            if(debugEnabled) {
+                                getInstance().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
+                                getInstance().getLogger().info("[LeakBlock] Dump: " + agent.json);
+                            }
+                            return;
+                        }
                         if (json.get("isp").toString().equalsIgnoreCase("OVH SAS")
                                 && (json.get("country").toString().equalsIgnoreCase("France")
                                 || json.get("country").toString().equalsIgnoreCase("Italy"))) {
@@ -211,11 +206,6 @@ public class LeakBlock extends Plugin implements Listener {
                                 }
                             });
 
-                        } else if (json.get("status").toString().equalsIgnoreCase("fail")) {
-                            if(debugEnabled) {
-                                getInstance().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
-                                getInstance().getLogger().info("[LeakBlock] Dump: " + agent.json);
-                            }
                         }
                     } catch (ResponseException e){
                         e.printStackTrace();
@@ -236,17 +226,19 @@ public class LeakBlock extends Plugin implements Listener {
                 UserAgent agent = new UserAgent();
                 agent.sendGET("http://ip-api.com/json/" + evt.getConnection().getAddress().getAddress().getHostAddress());
                 JNode json = agent.json;
+                if (json.get("status").toString().equalsIgnoreCase("fail")) {
+                    if(debugEnabled) {
+                        getInstance().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
+                        getInstance().getLogger().info("[LeakBlock] Dump: " + agent.json);
+                    }
+                    return;
+                }
                 if (json.get("isp").toString().equalsIgnoreCase("OVH SAS")
                         && (json.get("country").toString().equalsIgnoreCase("France")
                         || json.get("country").toString().equalsIgnoreCase("Italy"))) {
                     getProxy().getPluginManager().callEvent(new PlayerLeakBungeeProxyEvent(evt.getConnection().getName(), evt.getConnection().getUniqueId(), evt.getConnection().getAddress().getAddress()));
                     evt.setCancelled(true);
                     evt.setCancelReason(kickReason);
-                } else if (json.get("status").toString().equalsIgnoreCase("fail")) {
-                    if(debugEnabled) {
-                        getInstance().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
-                        getInstance().getLogger().info("[LeakBlock] Dump: " + agent.json);
-                    }
                 }
             } catch (ResponseException e){
                 e.printStackTrace();
@@ -282,6 +274,27 @@ public class LeakBlock extends Plugin implements Listener {
 
     public LeakBlock getInstance() {
         return instance;
+    }
+
+    public class UpdateListener implements Listener {
+        public String version = null;
+
+        public UpdateListener(String version){
+            this.version = version;
+        }
+
+        @EventHandler
+        public void onPlayerJoin(PostLoginEvent evt){
+            boolean hasAdmin = false;
+            for(String s: evt.getPlayer().getGroups()){
+                if(s.toLowerCase().contains("admin"))
+                    hasAdmin = true;
+            }
+            if(hasAdmin)
+                evt.getPlayer().sendMessage(ChatColor.DARK_GREEN+"["+ChatColor.GREEN+"LeakBlock"+ChatColor.DARK_GREEN+"] "
+                        +ChatColor.GRAY+"An update is available. Current version: "+getInstance().getDescription().getVersion()
+                        +", latest version: "+version);
+        }
     }
 
 }
