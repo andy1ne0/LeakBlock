@@ -14,6 +14,10 @@ import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.Scanner;
+
 /**
  * All contents of this file, except where specified elsewhere, is the copyrighted property of Andrew Petersen.
  * Any works derived from this must only be done so if permission is given beforehand by the author (Andrew Petersen).
@@ -46,9 +50,7 @@ public class LeakBlock extends JavaPlugin implements Listener {
     public void onEnable() {
 
         instance = this;
-
         saveDefaultConfig();
-
         getServer().getLogger().info("[LeakBlock] Initializing... ");
 
         kickReason = getConfig().getString("kickMessage").equalsIgnoreCase("default")
@@ -56,11 +58,8 @@ public class LeakBlock extends JavaPlugin implements Listener {
                 : getConfig().getString("kickMessage").replace("@@", "\n");
 
         asyncProcess = getConfig().getBoolean("asyncEnabled");
-
         maxFailedAttempts = getConfig().getInt("maximumFailedPings");
-
         debugEnabled = getConfig().getBoolean("debug");
-
         boolean updateCheck = getConfig().getBoolean("updatecheck");
 
         if (asyncProcess) {
@@ -73,9 +72,7 @@ public class LeakBlock extends JavaPlugin implements Listener {
         try {
             UserAgent pingAgent = new UserAgent();
             pingAgent.sendGET("http://ip-api.com/");
-
             getServer().getLogger().info("[LeakBlock] Successfully pinged ip-api.com. ");
-
         } catch (ResponseException e) {
             getServer().getLogger().severe("[LeakBlock] Could not connect to ip-api.com, or an error was returned. Plugin aborted. ");
             e.printStackTrace();
@@ -88,10 +85,11 @@ public class LeakBlock extends JavaPlugin implements Listener {
                 public void run() {
                     try {
                         getServer().getLogger().info("[LeakBlock] Checking for updates... ");
-                        final UserAgent a = new UserAgent();
-                        a.sendGET("https://raw.githubusercontent.com/andy1ne0/LeakBlock/master/src/main/resources/latestversion.txt");
+                        URL url = new URL("https://raw.githubusercontent.com/andy1ne0/LeakBlock/master/src/main/resources/latestversion.txt");
+                        Scanner s = new Scanner(url.openStream());
+                        final String version = s.next();
 
-                        if (a.doc.innerHTML().equalsIgnoreCase(getInstance().getDescription().getVersion())) {
+                        if (version.equalsIgnoreCase(getInstance().getDescription().getVersion())) {
                             getServer().getLogger().info("[LeakBlock] Your version is up to date. ");
                         } else {
                             getServer().getLogger().info("[LeakBlock] An update is available, or will be soon. Check the Spigot forums for more information. ");
@@ -102,12 +100,12 @@ public class LeakBlock extends JavaPlugin implements Listener {
                                     if(evt.getPlayer().isOp())
                                         evt.getPlayer().sendMessage(ChatColor.DARK_GREEN+"["+ChatColor.GREEN+"LeakBlock"+ChatColor.DARK_GREEN+"] "
                                                 +ChatColor.GRAY+"An update is available. Current version: "+getInstance().getDescription().getVersion()
-                                                +", latest version: "+a.doc.innerHTML());
+                                                +", latest version: "+version);
                                 }
 
                             }, getInstance());
                         }
-                    } catch (ResponseException e) {
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }

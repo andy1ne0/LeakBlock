@@ -40,6 +40,10 @@ public class PlayerLeakProxyEvent extends Event {
         return handlers;
     }
 
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
+
     public InetAddress getAddress(){
         return address;
     }

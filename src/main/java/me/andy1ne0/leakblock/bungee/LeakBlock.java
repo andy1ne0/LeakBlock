@@ -1,22 +1,23 @@
 package me.andy1ne0.leakblock.bungee;
 
+import com.jaunt.JNode;
+import com.jaunt.JauntException;
+import com.jaunt.ResponseException;
+import com.jaunt.UserAgent;
 import me.andy1ne0.leakblock.bungee.events.PlayerLeakBungeeProxyEvent;
 import me.andy1ne0.leakblock.bungee.events.PlayerLeakBungeeProxyPreProcessEvent;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.event.LoginEvent;
+import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 import net.md_5.bungee.event.EventHandler;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.json.JSONObject;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -102,24 +103,12 @@ public class LeakBlock extends Plugin implements Listener {
             getProxy().getLogger().info("[LeakBlock] Player processing is being handled synchronously. This may result in some lag. ");
         }
 
-        // timeout = getConfig().getInt("timeout");
-        // Bukkit.getServer().getLogger().info("[LeakBlock] The configured timeout for connections is "+timeout+". ");
-
         try {
-            HttpPost post = new HttpPost("http://ip-api.com/json/8.8.8.8");
-            HttpClient httpClient = HttpClientBuilder.create().build();
-            HttpResponse getData = httpClient.execute(post);
-            InputStream in = getData.getEntity().getContent();
-            BufferedReader inBuff = new BufferedReader(new InputStreamReader(in));
-            StringBuilder conv = new StringBuilder();
-            String s;
-            while((s = inBuff.readLine()) != null){
-                conv.append(s);
-            }
+            UserAgent pingAgent = new UserAgent();
+            pingAgent.sendGET("http://ip-api.com/");
+            getInstance().getLogger().info("[LeakBlock] Successfully pinged ip-api.com. ");
 
-            getProxy().getLogger().info("[LeakBlock] Successfully pinged ip-api.com. ");
-
-        } catch (IOException e){
+        } catch (ResponseException e){
             getProxy().getLogger().severe("[LeakBlock] Could not connect to ip-api.com. Plugin aborted. ");
             e.printStackTrace();
             getProxy().getPluginManager().unregisterListeners(this);
@@ -131,22 +120,32 @@ public class LeakBlock extends Plugin implements Listener {
                 @Override
                 public void run() {
                     try {
-                        getInstance().getLogger().info("[LeakBlock] Checking for updates... ");
-                        HttpPost post = new HttpPost("https://raw.githubusercontent.com/andy1ne0/LeakBlock/master/src/main/resources/latestversion.txt");
-                        HttpClient client = HttpClientBuilder.create().build();
-                        HttpResponse getFromPost = client.execute(post);
-                        InputStream in = getFromPost.getEntity().getContent();
-                        BufferedReader read = new BufferedReader(new InputStreamReader(in));
-                        StringBuilder conv = new StringBuilder();
-                        String s;
-                        while((s = read.readLine()) != null){
-                            conv.append(s);
+                        getProxy().getLogger().info("[LeakBlock] Checking for updates... ");
+                        final UserAgent a = new UserAgent();
+                        a.sendGET("https://raw.githubusercontent.com/andy1ne0/LeakBlock/master/src/main/resources/latestversion.txt");
+
+                        if (a.doc.innerHTML().equalsIgnoreCase(getInstance().getDescription().getVersion())) {
+                            getProxy().getLogger().info("[LeakBlock] Your version is up to date. ");
+                        } else {
+                            getProxy().getLogger().info("[LeakBlock] An update is available, or will be soon. Check the Spigot forums for more information. ");
+                            getProxy().getPluginManager().registerListener(getInstance(), new Listener() {
+
+                                @EventHandler
+                                public void onPlayerJoin(PostLoginEvent evt){
+                                    boolean hasAdmin = false;
+                                    for(String s: evt.getPlayer().getGroups()){
+                                        if(s.toLowerCase().contains("admin"))
+                                            hasAdmin = true;
+                                    }
+                                    if(hasAdmin)
+                                        evt.getPlayer().sendMessage(ChatColor.DARK_GREEN+"["+ChatColor.GREEN+"LeakBlock"+ChatColor.DARK_GREEN+"] "
+                                                +ChatColor.GRAY+"An update is available. Current version: "+getInstance().getDescription().getVersion()
+                                                +", latest version: "+a.doc.innerHTML());
+                                }
+
+                            });
                         }
-                        if (conv.toString().equalsIgnoreCase(getInstance().getDescription().getVersion()))
-                            getInstance().getLogger().info("[LeakBlock] Your version is up to date. ");
-                        else
-                            getInstance().getLogger().info("[LeakBlock] An update is available, or will be soon. Check the Spigot forums for more information. ");
-                    } catch (IOException e) {
+                    } catch (ResponseException e) {
                         e.printStackTrace();
                     }
                 }
@@ -186,24 +185,19 @@ public class LeakBlock extends Plugin implements Listener {
                 @SuppressWarnings("all")
                 public void run() {
                     try {
-                        HttpPost post = new HttpPost("http://ip-api.com/json/"+evt.getConnection().getAddress().getAddress().getHostAddress());
-                        HttpClient httpClient = HttpClientBuilder.create().build();
-                        HttpResponse getData = httpClient.execute(post);
-                        InputStream in = getData.getEntity().getContent();
-                        BufferedReader inBuff = new BufferedReader(new InputStreamReader(in));
-                        StringBuilder conv = new StringBuilder();
-                        String s = null;
-                        while((s = inBuff.readLine()) != null){
-                            conv.append(s);
-                        }
+                        UserAgent agent = new UserAgent();
+                        agent.sendGET("http://ip-api.com/json/" + evt.getConnection().getAddress().getAddress().getHostAddress());
 
-                        JSONObject json = new JSONObject(conv.toString());
-                        if(json.getString("isp").equalsIgnoreCase("OVH SAS") && (json.getString("country").equalsIgnoreCase("France") || json.getString("country").equalsIgnoreCase("Italy"))){
+                        JNode json = agent.json;
+                        if (json.get("isp").toString().equalsIgnoreCase("OVH SAS")
+                                && (json.get("country").toString().equalsIgnoreCase("France")
+                                || json.get("country").toString().equalsIgnoreCase("Italy"))) {
 
                             getProxy().getPluginManager().callEvent(
                                     new PlayerLeakBungeeProxyEvent(evt.getConnection().getName(),
                                             evt.getConnection().getUniqueId(),
                                             evt.getConnection().getAddress().getAddress()));
+
 
                             getProxy().getScheduler().runAsync(getInstance(), new Runnable() {
                                 @Override
@@ -217,13 +211,13 @@ public class LeakBlock extends Plugin implements Listener {
                                 }
                             });
 
-                        } else if(json.getString("status").equalsIgnoreCase("fail")){
+                        } else if (json.get("status").toString().equalsIgnoreCase("fail")) {
                             if(debugEnabled) {
                                 getInstance().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
-                                getInstance().getLogger().info("[LeakBlock] Dump: " + conv.toString());
+                                getInstance().getLogger().info("[LeakBlock] Dump: " + agent.json);
                             }
                         }
-                    } catch (IOException e){
+                    } catch (ResponseException e){
                         e.printStackTrace();
                         failedAttempts++;
                         if(failedAttempts >= maxFailedAttempts){
@@ -231,35 +225,30 @@ public class LeakBlock extends Plugin implements Listener {
                             getProxy().getPluginManager().unregisterCommands(getInstance());
                             getProxy().getPluginManager().unregisterListeners(getInstance());
                         }
+                    } catch (JauntException e){
+                        e.printStackTrace();
                     }
                 }
             });
 
         } else {
             try {
-                HttpPost post = new HttpPost("http://ip-api.com/json/"+evt.getConnection().getAddress().getAddress().getHostAddress());
-                HttpClient httpClient = HttpClientBuilder.create().build();
-                HttpResponse getData = httpClient.execute(post);
-                InputStream in = getData.getEntity().getContent();
-                BufferedReader inBuff = new BufferedReader(new InputStreamReader(in));
-                StringBuilder conv = new StringBuilder();
-                String s = null;
-                while((s = inBuff.readLine()) != null){
-                    conv.append(s);
-                }
-
-                JSONObject json = new JSONObject(conv.toString());
-                if(json.getString("isp").equalsIgnoreCase("OVH SAS") && (json.getString("country").equalsIgnoreCase("France") || json.getString("country").equalsIgnoreCase("Italy"))){
+                UserAgent agent = new UserAgent();
+                agent.sendGET("http://ip-api.com/json/" + evt.getConnection().getAddress().getAddress().getHostAddress());
+                JNode json = agent.json;
+                if (json.get("isp").toString().equalsIgnoreCase("OVH SAS")
+                        && (json.get("country").toString().equalsIgnoreCase("France")
+                        || json.get("country").toString().equalsIgnoreCase("Italy"))) {
                     getProxy().getPluginManager().callEvent(new PlayerLeakBungeeProxyEvent(evt.getConnection().getName(), evt.getConnection().getUniqueId(), evt.getConnection().getAddress().getAddress()));
                     evt.setCancelled(true);
                     evt.setCancelReason(kickReason);
-                } else if(json.getString("status").equalsIgnoreCase("fail")){
+                } else if (json.get("status").toString().equalsIgnoreCase("fail")) {
                     if(debugEnabled) {
                         getInstance().getLogger().info("[LeakBlock] The connection to ip-api returned an error. ");
-                        getInstance().getLogger().info("[LeakBlock] Dump: " + conv.toString());
+                        getInstance().getLogger().info("[LeakBlock] Dump: " + agent.json);
                     }
                 }
-            } catch (IOException e){
+            } catch (ResponseException e){
                 e.printStackTrace();
                 failedAttempts++;
                 if(failedAttempts >= maxFailedAttempts){
@@ -267,6 +256,8 @@ public class LeakBlock extends Plugin implements Listener {
                     getProxy().getPluginManager().unregisterListeners(this);
                     getProxy().getPluginManager().unregisterCommands(this);
                 }
+            } catch (JauntException e){
+                e.printStackTrace();
             }
         }
 
