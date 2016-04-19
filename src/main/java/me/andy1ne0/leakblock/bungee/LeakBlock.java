@@ -1,5 +1,6 @@
 package me.andy1ne0.leakblock.bungee;
 
+import com.google.common.io.ByteStreams;
 import com.jaunt.JNode;
 import com.jaunt.JauntException;
 import com.jaunt.ResponseException;
@@ -17,6 +18,7 @@ import net.md_5.bungee.config.YamlConfiguration;
 import net.md_5.bungee.event.EventHandler;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Scanner;
@@ -70,13 +72,8 @@ public class LeakBlock extends Plugin implements Listener {
                 if(!file.createNewFile()){
                     throw new RuntimeException("Could not create configuration file!");
                 }
-                try {
-                    config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(getResourceAsStream("config.yml"));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                ConfigurationProvider.getProvider(YamlConfiguration.class).save(config, file);
-                saveConfig();
+                //save config file directly from jar to preserve comments
+                ByteStreams.copy(getResourceAsStream("config.yml"), new FileOutputStream(file));
             }
         } catch (IOException e) {
             e.printStackTrace();
