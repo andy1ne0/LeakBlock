@@ -44,6 +44,7 @@ public class BungeeSettings extends AbstractSettings {
         //reset config if its an old config
         if (((int) cfg.getDouble("configversion", 0)) < 2) {
             saveDefaultConfig();
+            reload();
             plugin.getLogger().info("Config was reset due to new format");
         }
     }
@@ -68,7 +69,7 @@ public class BungeeSettings extends AbstractSettings {
         if (kickReason.equalsIgnoreCase("default")) {
             kickReason = DEFAULT_KICK_MESSAGE;
         }
-        maxFailedAttempts = cfg.getInt("maximumFailedPings");
+        maxFailedAttempts = cfg.getInt("maxFailedAttempts");
         debug = cfg.getBoolean("debug");
         updateCheck = cfg.getBoolean("updatecheck");
         fileCache = cfg.getBoolean("fileCache");

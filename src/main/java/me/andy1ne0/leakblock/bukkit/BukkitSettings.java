@@ -23,6 +23,7 @@ public class BukkitSettings extends AbstractSettings {
         //reset config if its an old config
         if (((int) plugin.getConfig().getDouble("configversion", 0)) < 2) {
             plugin.saveResource("config.yml", true);
+            plugin.reloadConfig();
             plugin.getLogger().info("Config was reset due to new format");
         }
         readConfig();
@@ -41,7 +42,7 @@ public class BukkitSettings extends AbstractSettings {
         if (kickReason.equalsIgnoreCase("default")) {
             kickReason = DEFAULT_KICK_MESSAGE;
         }
-        maxFailedAttempts = cfg.getInt("maximumFailedPings");
+        maxFailedAttempts = cfg.getInt("maxFailedAttempts");
         debug = cfg.getBoolean("debug");
         updateCheck = cfg.getBoolean("updatecheck");
         fileCache = cfg.getBoolean("fileCache");

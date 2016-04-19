@@ -1,7 +1,5 @@
 package me.andy1ne0.leakblock.core;
 
-import org.bukkit.ChatColor;
-
 /**
  * Settings interface which does not depend on bukkit or bungee
  *
@@ -12,7 +10,7 @@ import org.bukkit.ChatColor;
  */
 public interface Settings {
 
-    String DEFAULT_KICK_MESSAGE = ChatColor.RED + "Prohibited proxy detected. \nPlease rejoin without using a proxy/VPN/Alt-generating server. ";
+    String DEFAULT_KICK_MESSAGE = "§4Prohibited proxy detected. \nPlease rejoin without using a proxy/VPN/Alt-generating server. ";
 
     String getKickReason();
 
