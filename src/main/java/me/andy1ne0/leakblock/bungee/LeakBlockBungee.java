@@ -166,7 +166,7 @@ public class LeakBlockBungee extends Plugin implements Listener {
         }
     }
 
-    private static class UpdateListener implements Listener {
+    public static class UpdateListener implements Listener {
 
         private final BaseComponent[] message;
 

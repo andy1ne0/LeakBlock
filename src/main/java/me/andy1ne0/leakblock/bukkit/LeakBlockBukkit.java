@@ -138,7 +138,7 @@ public class LeakBlockBukkit extends JavaPlugin implements Listener {
         getServer().getPluginManager().callEvent(new BukkitLeakBlockPostCheckEvent(evt.getName(), evt.getUniqueId(), ip, block));
     }
 
-    private static class UpdateListener implements Listener {
+    public static class UpdateListener implements Listener {
 
         private final String message;
 
