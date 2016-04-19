@@ -7,7 +7,7 @@ import net.md_5.bungee.api.plugin.Event;
 
 /**
  * Event called after checking an ip with ip-api.com
- * 
+ *
  * This allowes you to see whether the connection attempt was blocked or not based on the data from ip-api.com
  *
  * License: LGPLv3
