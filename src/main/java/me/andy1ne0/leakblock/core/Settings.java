@@ -22,5 +22,7 @@ public interface Settings {
 
     boolean isUpdateCheck();
 
+    boolean isFileCache();
+
     void reload();
 }

@@ -1,5 +1,8 @@
 package me.andy1ne0.leakblock.bungee;
 
+import lombok.Getter;
+import me.andy1ne0.leakblock.bungee.cache.BungeeCache;
+import me.andy1ne0.leakblock.bungee.cache.BungeeCacheListener;
 import me.andy1ne0.leakblock.bungee.event.BungeeLeakBlockPostCheckEvent;
 import me.andy1ne0.leakblock.bungee.event.BungeeLeakBlockPreCheckEvent;
 import me.andy1ne0.leakblock.core.IpApi;
@@ -16,7 +19,6 @@ import net.md_5.bungee.event.EventHandler;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.ErrorManager;
 import java.util.logging.Level;
 
 /**
@@ -41,13 +43,25 @@ public class LeakBlockBungee extends Plugin implements Listener {
 
     private int failedAttempts = 0;
     private BungeeSettings settings;
+    @Getter
+    private BungeeCache cache;
 
     @Override
     public void onEnable() {
         try {
             settings = new BungeeSettings(this);
         } catch (IOException ex) {
-            getLogger().log(Level.SEVERE, "Error while initializing the config", ex);
+            getLogger().log(Level.SEVERE, "Error while initializing the config, plugin stopped", ex);
+            return;
+        }
+
+        if (settings.isFileCache()) {
+            try {
+                cache = new BungeeCache(this);
+                getProxy().getPluginManager().registerListener(this, new BungeeCacheListener(cache));
+            } catch (IOException ex) {
+                getLogger().log(Level.WARNING, "Could not initialize the cache", ex);
+            }
         }
 
         if (settings.isUpdateCheck()) {
@@ -82,6 +96,17 @@ public class LeakBlockBungee extends Plugin implements Listener {
                 failedAttempts = 0;
             }
         }, 60, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public void onDisable() {
+        if (cache != null) {
+            try {
+                cache.saveCache();
+            } catch (IOException ex) {
+                getLogger().log(Level.WARNING, "Could not save the cache", ex);
+            }
+        }
     }
 
     @EventHandler

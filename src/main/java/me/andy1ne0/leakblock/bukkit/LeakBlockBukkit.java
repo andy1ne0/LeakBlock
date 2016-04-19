@@ -1,5 +1,8 @@
 package me.andy1ne0.leakblock.bukkit;
 
+import lombok.Getter;
+import me.andy1ne0.leakblock.bukkit.cache.BukkitCache;
+import me.andy1ne0.leakblock.bukkit.cache.BukkitCacheListener;
 import me.andy1ne0.leakblock.bukkit.event.BukkitLeakBlockPostCheckEvent;
 import me.andy1ne0.leakblock.bukkit.event.BukkitLeakBlockPreCheckEvent;
 import me.andy1ne0.leakblock.core.IpApi;
@@ -12,6 +15,9 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+
+import java.io.IOException;
+import java.util.logging.Level;
 
 /**
  * All contents of this file, except where specified elsewhere, is the copyrighted property of Andrew Petersen.
@@ -35,10 +41,20 @@ public class LeakBlockBukkit extends JavaPlugin implements Listener {
 
     private int failedAttempts = 0;
     private BukkitSettings settings;
+    @Getter
+    private BukkitCache cache;
 
     @Override
     public void onEnable() {
         settings = new BukkitSettings(this);
+        if (settings.isFileCache()) {
+            try {
+                cache = new BukkitCache(this);
+                getServer().getPluginManager().registerEvents(new BukkitCacheListener(cache), this);
+            } catch (IOException ex) {
+                getLogger().log(Level.WARNING, "Could not initialize the cache", ex);
+            }
+        }
 
         if (settings.isUpdateCheck()) {
             new BukkitRunnable() {
@@ -71,6 +87,17 @@ public class LeakBlockBukkit extends JavaPlugin implements Listener {
                 failedAttempts = 0;
             }
         }.runTaskTimer(this, 60 * 20, 60 * 20);
+    }
+
+    @Override
+    public void onDisable() {
+        if (cache != null) {
+            try {
+                cache.saveCache();
+            } catch (IOException ex) {
+                getLogger().log(Level.WARNING, "Could not save the cache", ex);
+            }
+        }
     }
 
     @EventHandler

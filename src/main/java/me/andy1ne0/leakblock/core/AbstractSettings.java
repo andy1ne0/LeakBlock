@@ -17,4 +17,5 @@ public abstract class AbstractSettings implements Settings {
     protected int maxFailedAttempts;
     protected boolean debug;
     protected boolean updateCheck;
+    protected boolean fileCache;
 }

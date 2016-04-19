@@ -44,5 +44,6 @@ public class BukkitSettings extends AbstractSettings {
         maxFailedAttempts = cfg.getInt("maximumFailedPings");
         debug = cfg.getBoolean("debug");
         updateCheck = cfg.getBoolean("updatecheck");
+        fileCache = cfg.getBoolean("fileCache");
     }
 }

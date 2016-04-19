@@ -13,5 +13,7 @@ kickMessage: "default"
 debug: false
 # updatecheck refers to if the plugin will automatically check for updates. This is HIGHLY recommended to be left as true, to keep on top of the MCLeaks proxy.
 updatecheck: true
+# whether to cache the results of ip-api.com; this will be done in the cache.yml file
+fileCache: true
 # config version - do not touch it or your config might get reset
 configversion: 2
