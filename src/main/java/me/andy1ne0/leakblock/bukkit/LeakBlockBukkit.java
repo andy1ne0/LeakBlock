@@ -1,8 +1,11 @@
 package me.andy1ne0.leakblock.bukkit;
 
+import me.andy1ne0.leakblock.bukkit.event.BukkitLeakBlockPostCheckEvent;
+import me.andy1ne0.leakblock.bukkit.event.BukkitLeakBlockPreCheckEvent;
 import me.andy1ne0.leakblock.core.IpApi;
 import me.andy1ne0.leakblock.core.VersionInformation;
 import org.bukkit.ChatColor;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
@@ -76,6 +79,18 @@ public class LeakBlockBukkit extends JavaPlugin implements Listener {
             return;
         }
         String ip = evt.getAddress().getHostAddress();
+
+        BukkitLeakBlockPreCheckEvent preCheckEvent = new BukkitLeakBlockPreCheckEvent(evt.getName(), evt.getUniqueId(), ip, settings.getKickReason());
+
+        getServer().getPluginManager().callEvent(preCheckEvent);
+
+        if (preCheckEvent.getResult() == Event.Result.DENY) {
+            evt.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, preCheckEvent.getKickMessage());
+            return;
+        } else if (preCheckEvent.getResult() == Event.Result.ALLOW) {
+            return;
+        }
+
         IpApi.IpApiResponse res = IpApi.requestData(ip);
         if (res == null) {
             failedAttempts++;
@@ -89,9 +104,11 @@ public class LeakBlockBukkit extends JavaPlugin implements Listener {
         if (IpApi.isFailAndLog(res, settings, getLogger(), ip)) {
             return;
         }
-        if (IpApi.shouldBlock(res)) {
-            evt.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, settings.getKickReason());
+        boolean block = IpApi.shouldBlock(res);
+        if (block) {
+            evt.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, preCheckEvent.getKickMessage());
         }
+        getServer().getPluginManager().callEvent(new BukkitLeakBlockPostCheckEvent(evt.getName(), evt.getUniqueId(), ip, block));
     }
 
     private static class UpdateListener implements Listener {

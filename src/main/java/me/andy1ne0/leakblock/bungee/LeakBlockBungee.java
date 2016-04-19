@@ -1,5 +1,7 @@
 package me.andy1ne0.leakblock.bungee;
 
+import me.andy1ne0.leakblock.bungee.event.BungeeLeakBlockPostCheckEvent;
+import me.andy1ne0.leakblock.bungee.event.BungeeLeakBlockPreCheckEvent;
 import me.andy1ne0.leakblock.core.IpApi;
 import me.andy1ne0.leakblock.core.VersionInformation;
 import net.md_5.bungee.api.ChatColor;
@@ -14,6 +16,7 @@ import net.md_5.bungee.event.EventHandler;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.ErrorManager;
 import java.util.logging.Level;
 
 /**
@@ -87,28 +90,55 @@ public class LeakBlockBungee extends Plugin implements Listener {
             return;
         }
         final String ip = evt.getConnection().getAddress().getAddress().getHostAddress();
+
+        BungeeLeakBlockPreCheckEvent preCheckEvent = getProxy().getPluginManager().callEvent(new BungeeLeakBlockPreCheckEvent(evt.getConnection(), settings.getKickReason()));
+
+        if (preCheckEvent.getResult() == BungeeLeakBlockPreCheckEvent.Result.DENY) {
+            evt.setCancelled(true);
+            evt.setCancelReason(settings.getKickReason());
+            return;
+        } else if (preCheckEvent.getResult() == BungeeLeakBlockPreCheckEvent.Result.ALLOW) {
+            return;
+        }
+
         evt.registerIntent(this);
 
-        getProxy().getScheduler().runAsync(this, new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    IpApi.IpApiResponse res = IpApi.requestData(ip);
-                    if (res == null) {
-                        failedAttempts++;
-                        if (failedAttempts >= settings.getMaxFailedAttempts()) {
-                            getLogger().info("Maximum failure limit reached. Plugin terminated.");
-                            getProxy().getPluginManager().unregisterListeners(LeakBlockBungee.this);
+        //make really sure we complete the intent
+        try {
+            getProxy().getScheduler().runAsync(this, new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        IpApi.IpApiResponse res = IpApi.requestData(ip);
+                        if (res == null) {
+                            failedAttempts++;
+                            if (failedAttempts >= settings.getMaxFailedAttempts()) {
+                                getLogger().info("Maximum failure limit reached. Plugin terminated.");
+                                getProxy().getPluginManager().unregisterListeners(LeakBlockBungee.this);
+                            }
+                        } else if (!IpApi.isFailAndLog(res, settings, getLogger(), ip)) {
+                            boolean block = IpApi.shouldBlock(res);
+                            if (block) {
+                                evt.setCancelled(true);
+                                evt.setCancelReason(settings.getKickReason());
+                            }
+                            getProxy().getPluginManager().callEvent(new BungeeLeakBlockPostCheckEvent(evt.getConnection(), block));
                         }
-                    } else if (!IpApi.isFailAndLog(res, settings, getLogger(), ip) && IpApi.shouldBlock(res)) {
-                        evt.setCancelled(true);
-                        evt.setCancelReason(settings.getKickReason());
+                    } finally {
+                        evt.completeIntent(LeakBlockBungee.this);
                     }
-                } finally {
-                    evt.completeIntent(LeakBlockBungee.this);
                 }
+            });
+        } catch (Throwable t) {
+            evt.completeIntent(this);
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else if (t instanceof Error) {
+                throw (Error) t;
+            } else {
+                throw new RuntimeException(t);
             }
-        });
+        }
     }
 
     private static class UpdateListener implements Listener {
