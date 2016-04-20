@@ -1,8 +1,9 @@
 package me.andy1ne0.leakblock.core;
 
+import lombok.RequiredArgsConstructor;
+
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Basic cache class without being dependant on bukkit or bungee
@@ -12,9 +13,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Janmm14
  * @since 2.0.0
  */
+@RequiredArgsConstructor
 public abstract class Cache {
 
-    protected final Map<String, Boolean> cache = new ConcurrentHashMap<String, Boolean>(64, .75f, Runtime.getRuntime().availableProcessors());
+    protected final Map<String, Boolean> cache;
 
     /**
      * @param ip the ip to look up

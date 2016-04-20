@@ -6,6 +6,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * A cache which can save its data through Bukkit's configuration api to a file
@@ -21,6 +22,7 @@ public class BukkitCache extends Cache {
     private YamlConfiguration cfg;
 
     public BukkitCache(LeakBlockBukkit plugin) throws IOException {
+        super(new HashMap<String, Boolean>(64));
         File dataFolder = plugin.getDataFolder();
         file = new File(dataFolder, "cache.yml");
         if (!dataFolder.exists() && !dataFolder.mkdirs()) {
