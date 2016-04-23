@@ -9,6 +9,7 @@ import net.md_5.bungee.config.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 
 /**
  * A cache which can save its data through Bungee's configuration api to a file
@@ -24,9 +25,11 @@ public class BungeeCache extends Cache {
 
     private final File file;
     private Configuration cfg;
+    private LeakBlockBungee inst;
 
     public BungeeCache(LeakBlockBungee plugin) throws IOException {
         super(new ConcurrentHashMap<String, Boolean>(64, .75f, Runtime.getRuntime().availableProcessors()));
+        inst = plugin;
         File dataFolder = plugin.getDataFolder();
         file = new File(dataFolder, "cache.yml");
         if (!dataFolder.exists() && !dataFolder.mkdirs()) {
@@ -61,7 +64,7 @@ public class BungeeCache extends Cache {
         try {
             saveCache();
         } catch (IOException e){
-            System.out.println("Cache could not be saved. ");
+            inst.getLogger().log(Level.SEVERE, "Could not save cache. ", e);
             e.printStackTrace();
         }
     }
