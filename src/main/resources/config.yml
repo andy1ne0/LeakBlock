@@ -1,24 +1,21 @@
 # LeakBlock, by Yellow.
 # This plugin's purpose is to block the use of the MCLeaks proxies to evade bans on compromised accounts.
-# The asyncEnabled field must be either true or false, this will determine if the processing of account data is handled on or off the main thread.
-# The kick message is simply a way for you to configure the kick message. Use "@@" (without quotation marks) to signify a new line.
-# Use "&" color codes.
-# If the kick message is equal to "default", the kick message will be set to the default value.
-# The kickDelayTime field is ONLY USED IF processing is handled asynchronously.
-# This will allow you to finetune the delay on kicks, as sometimes the kick reason will not appear if the player has not yet loaded a world.
-# On Bukkit, the kickDelayTime is measured in ticks. On BUNGEE, the kick delay time is measured in milliseconds. Don't be confused by this.
-# If there are 5 failed connections within a minute, the plugin will terminate.
-# Please keep in mind that the ip-api.com API has a limit of 150 connections per minute. If your server is exceeding that, you need to contact them.
-# This plugin has an event API for developers to use, if you wish to cache results to reduce your usage of the ip-api service.
+#
+# Please keep in mind that the ip-api.com API has a limit of 150 connections per minute.
+# If your server is exceeding that, you need to contact them.
 # More info about that on the Spigot resource page.
-# The maximumFailedAttempts field refers to how many connections that can return an error before the plugin is terminated.
-# Please keep in mind - this refers to failed connections to the ip-api website itself.
-# If the API returns a failed result, that player will be allowed to connect, and you will get a console message if debugging is enabled.
-# updatecheck refers to if the plugin will automatically check for updates. This is HIGHLY recommended to be left as true, to keep on top of the MCLeaks proxy.
 
-asyncEnabled: false
-kickMessage: default
-kickDelayTime: 0
-maximumFailedPings: 5
+# The kick message is simply a way for you to configure the kick message. Use "\n" (without quotation marks) to signify a new line.
+# Use "&" color codes.
+# If the kick message is "default", the kick message will be set to the default value.
+kickMessage: "default"
+# If the API returns a failed result, that player will be allowed to connect, and you will get a console message if debugging is enabled.
 debug: false
+# updatecheck refers to if the plugin will automatically check for updates. This is HIGHLY recommended to be left as true, to keep on top of the MCLeaks proxy.
 updatecheck: true
+# maximum failed attempts per minute until plugin stops itself
+maxFailedAttempts: 5
+# whether to cache the results of ip-api.com; this will be done in the cache.yml file
+fileCache: true
+# config version - do not touch it or your config might get reset
+configversion: 2
