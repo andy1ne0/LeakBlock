@@ -54,6 +54,12 @@ public class BukkitCache extends Cache {
     public void fillCache(String ip, boolean blocked) {
         super.fillCache(ip, blocked);
         cfg.set(ip, blocked);
+        try {
+            saveCache();
+        } catch (IOException e){
+            System.out.println("Cache could not be saved. ");
+            e.printStackTrace();
+        }
     }
 
     @Override
