@@ -2,4 +2,4 @@ name: LeakBlock
 version: 2.0.0
 author: TheYellowCreepz
 main: me.andy1ne0.leakblock.bungee.LeakBlockBungee
-desctiption: Block the usage of the MCLeaks Proxy.
+description: Block the usage of the MCLeaks Proxy.
